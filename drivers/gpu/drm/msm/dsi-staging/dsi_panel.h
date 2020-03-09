@@ -251,6 +251,8 @@ struct dsi_panel {
 	struct brightness_alpha_pair *fod_dim_lut;
 	u32 fod_dim_lut_count;
 
+	bool resend_ea;
+
 	u32 last_bl_lvl;
 	u32 backlight_demura_level; /* For the f4_41 panel */
 	/* DC bkl */
