@@ -844,7 +844,7 @@ int dsi_panel_set_fod_hbm(struct dsi_panel *panel, bool status)
 	int rc = 0;
 
 	if (status) {
-		if (ea_panel_is_enabled()) {
+		if (ea_panel_is_enabled() && !panel->bl_config.dcs_type_ss_eb) {
 			ea_panel_mode_ctrl(panel, 0);
 			panel->resend_ea = true;
 		}
@@ -859,7 +859,7 @@ int dsi_panel_set_fod_hbm(struct dsi_panel *panel, bool status)
 		if (rc)
 			pr_err("[%s] failed to send DSI_CMD_SET_DISP_HBM_FOD_OFF cmd, rc=%d\n",
 					panel->name, rc);
-		if (panel->resend_ea) {
+		if (panel->resend_ea && !panel->bl_config.dcs_type_ss_eb) {
 			ea_panel_mode_ctrl(panel, 1);
 			panel->resend_ea = false;
 		}
@@ -4886,13 +4886,15 @@ int dsi_panel_apply_hbm_mode(struct dsi_panel *panel)
 	int rc;
 
 	if (panel->hbm_mode >= 0 && panel->hbm_mode < ARRAY_SIZE(type_map)) {
-		if (ea_panel_is_enabled() && panel->hbm_mode != 0) {
-			ea_panel_mode_ctrl(panel, 0);
-			panel->resend_ea_hbm = true;
-		} else if (panel->resend_ea_hbm && panel->hbm_mode == 0) {
-			ea_panel_mode_ctrl(panel, 1);
-			panel->resend_ea_hbm = false;
-		}
+        if (!panel->bl_config.dcs_type_ss_eb) {
+    	    if (ea_panel_is_enabled() && panel->hbm_mode != 0) {
+    		    ea_panel_mode_ctrl(panel, 0);
+    		    panel->resend_ea_hbm = true;
+    	    } else if (panel->resend_ea_hbm && panel->hbm_mode == 0) {
+    		    ea_panel_mode_ctrl(panel, 1);
+    		    panel->resend_ea_hbm = false;
+    	    }
+        }
 		type = type_map[panel->hbm_mode];
 	} else {
 		type = type_map[0];
