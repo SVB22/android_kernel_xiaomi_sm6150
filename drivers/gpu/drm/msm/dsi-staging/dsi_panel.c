@@ -701,10 +701,6 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	if (rc < 0)
 		pr_err("failed to update demura backlight:%d\n", bl_lvl);
 
-	if (panel->doze_enabled) {
-		dsi_panel_update_doze(panel);
-	}
-
 	return rc;
 }
 
@@ -790,22 +786,16 @@ u32 dsi_panel_get_fod_dim_alpha(struct dsi_panel *panel)
 int dsi_panel_update_doze(struct dsi_panel *panel) {
 	int rc = 0;
 
-	if (panel->doze_enabled &&
-			panel->bl_config.bl_level >= panel->doze_backlight_threshold) {
+	if (panel->doze_enabled && panel->doze_mode == DSI_DOZE_HBM) {
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DOZE_HBM);
 		if (rc)
 			pr_err("[%s] failed to send DSI_CMD_SET_DOZE_HBM cmd, rc=%d\n",
 					panel->name, rc);
-		else
-			panel->doze_mode = DSI_DOZE_HBM;
-	} else if (panel->doze_enabled &&
-			panel->bl_config.bl_level < panel->doze_backlight_threshold) {
+	} else if (panel->doze_enabled && panel->doze_mode == DSI_DOZE_LBM) {
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DOZE_LBM);
 		if (rc)
 			pr_err("[%s] failed to send DSI_CMD_SET_DOZE_LBM cmd, rc=%d\n",
 					panel->name, rc);
-		else
-			panel->doze_mode = DSI_DOZE_LBM;
 	} else if (!panel->doze_enabled) {
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_NOLP);
 		if (rc)
@@ -821,6 +811,18 @@ int dsi_panel_set_doze_status(struct dsi_panel *panel, bool status) {
 		return 0;
 
 	panel->doze_enabled = status;
+
+	return dsi_panel_update_doze(panel);
+}
+
+int dsi_panel_set_doze_mode(struct dsi_panel *panel, enum dsi_doze_mode_type mode) {
+	if (panel->doze_mode == mode)
+		return 0;
+
+	panel->doze_mode = mode;
+
+	if (!panel->doze_enabled)
+		return 0;
 
 	return dsi_panel_update_doze(panel);
 }
@@ -2617,14 +2619,6 @@ static int dsi_panel_parse_bl_config(struct dsi_panel *panel)
 		panel->bl_config.brightness_default_level = val;
 	}
 
-	rc = utils->read_u32(utils->data,
-		"qcom,disp-doze-backlight-threshold", &val);
-	if (rc) {
-		panel->doze_backlight_threshold = 5;
-		pr_info("set doze backlight threshold to 5\n");
-	} else {
-		panel->doze_backlight_threshold = val;
-	}
 
 	rc = utils->read_u32(utils->data,
 			"qcom,mdss-dsi-panel-dc-demura-threshold", &val);
