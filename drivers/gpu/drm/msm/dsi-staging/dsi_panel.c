@@ -758,18 +758,7 @@ error:
 
 static u32 dsi_panel_get_backlight(struct dsi_panel *panel)
 {
-	u32 bl_level;
-
-	if (panel->doze_enabled && panel->bl_config.bl_level >
-		panel->doze_backlight_threshold)
-		bl_level = panel->bl_config.bl_doze_hbm;
-	else if (panel->doze_enabled && panel->bl_config.bl_level <=
-		panel->doze_backlight_threshold)
-		bl_level = panel->bl_config.bl_doze_lbm;
-	else if (!panel->doze_enabled)
-		bl_level = panel->bl_config.bl_level;
-
-	return bl_level;
+	return panel->bl_config.bl_level;
 }
 
 static u32 interpolate(uint32_t x, uint32_t xa, uint32_t xb, uint32_t ya, uint32_t yb)
@@ -2575,24 +2564,6 @@ static int dsi_panel_parse_bl_config(struct dsi_panel *panel)
 		pr_debug("set default brightness to max level\n");
 	} else {
 		panel->bl_config.brightness_default_level = val;
-	}
-
-	rc = utils->read_u32(utils->data,
-			"qcom,disp-doze-lbm-backlight", &val);
-	if (rc) {
-		panel->bl_config.bl_doze_lbm = 0;
-		pr_debug("set doze lbm backlight to 0\n");
-	} else {
-		panel->bl_config.bl_doze_lbm = val;
-	}
-
-	rc = utils->read_u32(utils->data,
-			"qcom,disp-doze-hbm-backlight", &val);
-	if (rc) {
-		panel->bl_config.bl_doze_hbm = 0;
-		pr_debug("set doze hbm backlight to 0\n");
-	} else {
-		panel->bl_config.bl_doze_hbm = val;
 	}
 
 	rc = utils->read_u32(utils->data,
