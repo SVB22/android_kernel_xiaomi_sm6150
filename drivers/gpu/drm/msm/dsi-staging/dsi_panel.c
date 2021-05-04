@@ -686,7 +686,7 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	}
 
 	dsi = &panel->mipi_device;
-	
+
 #ifdef CONFIG_KLAPSE
 	set_rgb_slider(bl_lvl);
 #endif
@@ -698,10 +698,6 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 		rc = mipi_dsi_dcs_set_display_brightness_ss(dsi, bl_lvl);
 	else
 		rc = mipi_dsi_dcs_set_display_brightness(dsi, bl_lvl);
-
-	if (rc < 0)
-		pr_err("failed to update dcs backlight:%d\n", bl_lvl);
-	}
 
 	/* For the f4_41 panel, we need to switch the DEMURA_LEVEL according to the value of the 51 register. */
 	if (panel->bl_config.xiaomi_f4_41_flag)
@@ -810,8 +806,6 @@ int dsi_panel_set_fod_hbm(struct dsi_panel *panel, bool status)
 		if (rc)
 			pr_err("[%s] failed to send DSI_CMD_SET_DISP_HBM_FOD_ON cmd, rc=%d\n",
 					panel->name, rc);
-	} else if (panel->doze_enabled) {
-		rc = dsi_panel_update_lp_mode(panel);
 	} else {
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_HBM_FOD_OFF);
 		if (rc)
